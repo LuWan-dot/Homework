@@ -1,4 +1,4 @@
-function [Phi,omega,lambda,b,Xdmd,S] = DMD(X1,X2,r,t)
+function [Phi,omega,lambda,b,Xdmd,S] = DMD2(X1,X2,r,t)
 %Computes the Dynamic Mode Decomposition of X1, X2
 
 %INPUTS:
@@ -7,6 +7,7 @@ function [Phi,omega,lambda,b,Xdmd,S] = DMD(X1,X2,r,t)
 % Columns of X1 and X2 are state snapshots
 % r = target rank of SVD
 % dt = time step advancing X1 to X2
+% t is input time
 
 % OUTPUTS:
 % Phi, the DMD modes
@@ -16,11 +17,13 @@ function [Phi,omega,lambda,b,Xdmd,S] = DMD(X1,X2,r,t)
 % Xdmd, the data matrix reconstructed by Phi, omega, b
 
 %%%% Step 1: SVD the raw data X, and get the reduced space
-[U,S,V] = svd(X1,'econ');
-r = min(r,size(U,2));
 dt = t(2) - t(1);
 
-semilogy(diag(S),'ko')
+[U,S,V] = svd(X1,'econ');
+r = min(r,size(U,2));
+
+
+%semilogy(diag(S),'ko')
 
 % truncate to rank-r
 U_r = U(:,1:r);
@@ -50,20 +53,26 @@ x1 = X1(:,1);
 b = Phi\x1;
 
 % DMD reconstruction
+% 
+% mm1 = size(X1, 2);
+% time_dynamics = zeros(r,mm1);
+% 
+% % time vector
+% t = (0:mm1-1)*dt;
+% 
+% for iter = 1:mm1
+%     time_dynamics(:,iter) = (b.*exp(omega*t(iter)));
+% end
+% 
+% Xdmd = Phi * time_dynamics;
 
-%mm1 = size(X1, 2);
+time_dynamics = zeros(r,length(t));
 
-mm1 = length(t)-1;
-time_dynamics = zeros(r,mm1);
-
-% time vector
-t = (0:mm1-1)*dt;
-
-for iter = 1:mm1
-    time_dynamics(:,iter) = (b.*exp(omega*t(iter)));
+for iter = 1:length(t)
+    time_dynamics(:,iter) = b.*exp(omega*(t(iter)));
 end
 
-Xdmd = Phi * time_dynamics;
+Xdmd = Phi*time_dynamics;
 
 end
 
